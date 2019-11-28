@@ -1,13 +1,13 @@
 pitch_type,EN,ZH
-FF,four-seam fastball,四縫線快速球
-CU,curveball,曲球
-SL,slider,滑球
-CH,changeup,變速球
-FT,two-seam fastball,二縫線快速球
+FF,4-Seam Fastball,四縫線快速球
+CU,Curveball,曲球
+SL,Slider,滑球
+CH,Changeup,變速球
+FT,2-Seam Fastball,二縫線快速球
 SI,Sinker,下沉快速球
-FS,fastball,快速直球
-KC,knuckle-curve,彈指曲球
-FC,fastball (cutter),外切快速球
-EP,eephus,小便球
-FO,pitch out,
-KN,knuckleball,蝴蝶球
+FS,Split Finger,叉指快速球
+KC,Knuckle Curve,彈指曲球
+FC,Cutter,外切快速球 卡特
+EP,Eephus,小便球
+FO,Forkball,指叉球
+KN,Knuckle Ball,蝴蝶球
