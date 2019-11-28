@@ -10,3 +10,4 @@ dbListTables(db)
 mlb_record <- dbReadTable(db, "mlb_record")
 mlb_player <- dbReadTable(db, "mlb_player")
 
+dbGetQuery(db, "SELECT pitch_type,zone,type from mlb_record")
