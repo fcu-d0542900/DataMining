@@ -31,7 +31,7 @@ swinging_strike[["release_speed"]] <- ordered(cut(swinging_strike[[ "release_spe
 swinging_strike[["release_spin_rate"]] <- ordered(cut(swinging_strike[[ "release_spin_rate"]], c(0,1700,1900,2100,2300,2500,4000)),
                                               labels = c("<1700", "1700-1900", "1900-2100", "2100-2300", "2300-2500", ">2500"))
 
-mean <- swinging_strike %>%
+swinging_strike_mean <- swinging_strike %>%
   group_by(release_speed,release_spin_rate) %>%
   summarise(mean = mean(swinging_strike))
 
