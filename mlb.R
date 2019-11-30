@@ -13,6 +13,7 @@ dbListTables(db)
 #dbGetQuery(db, "SELECT pitch_type,zone,type from mlb_record")
 
 release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle from mlb_record")
+unique(release_speed_rate$description)
 
 release_speed_rate[["release_speed"]] <- ordered(cut(release_speed_rate[[ "release_speed"]], c(0,70,75,80,85,90,95,100,110)),
                                               labels = c("<70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-100", ">100"))
@@ -34,7 +35,7 @@ swinging_strike <- swinging_strike[-3]
 
 swinging_strike_mean <- swinging_strike %>%
   group_by(release_speed,release_spin_rate) %>%
-  summarise(swinging_strike.mean = mean(swinging_strike))
+  summarise(swinging_strike.sum = sum(swinging_strike), swinging_strike.mean = mean(swinging_strike))
 
 #launch_angle
 launch_angle <- release_speed_rate[-3]
