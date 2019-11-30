@@ -40,7 +40,7 @@ swinging_strike_mean <- swinging_strike %>%
 #launch_angle
 launch_angle <- release_speed_rate[-3]
 launch_angle <- na.omit(launch_angle)
-
+#?刪掉短打的部分
 launch_angle_mean <- launch_angle %>%
   group_by(release_speed,release_spin_rate) %>%
   summarise(launch_angle.mean = mean(launch_angle))
