@@ -40,9 +40,45 @@ swinging_strike_mean <- swinging_strike %>%
 #launch_angle
 launch_angle <- release_speed_rate[-3]
 launch_angle <- na.omit(launch_angle)
-#?�R���u��������
+#?§R±¼µu¥´ªº³¡¤À
 launch_angle_mean <- launch_angle %>%
   group_by(release_speed,release_spin_rate) %>%
   summarise(launch_angle.mean = mean(launch_angle))
 
-data.frame(full_join(swinging_strike_mean,launch_angle_mean,by=c("release_speed","release_spin_rate")))
+##data.frame(full_join(swinging_strike_mean,launch_angle_mean,by=c("release_speed","release_spin_rate")))
+
+##這邊開始畫圖 by 鈴
+##拿出release_spin_rate的所有範圍
+release_spin_rate<-swinging_strike_mean$release_spin_rate%>%unique()%>%.[-1]
+##畫表格
+table_1<-lapply(release_spin_rate,function(r){
+  data.frame(
+    release_spin_rate = r,
+    `<70` = swinging_strike_mean%>%filter(release_speed == "<70",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `70-75` = swinging_strike_mean%>%filter(release_speed == "70-75",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `75-80` = swinging_strike_mean%>%filter(release_speed == "75-80",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `80-85` = swinging_strike_mean%>%filter(release_speed == "80-85",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `85-90` = swinging_strike_mean%>%filter(release_speed == "85-90",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `90-95` = swinging_strike_mean%>%filter(release_speed == "90-95",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `95-100` = swinging_strike_mean%>%filter(release_speed == "95-100",release_spin_rate == r)%>%.$swinging_strike.mean*100,
+    `>100` = swinging_strike_mean%>%filter(release_speed == ">100",release_spin_rate == r)%>%.$swinging_strike.mean*100
+  )
+})%>%bind_rows()%>%t()%>%{
+  colnames(.) <- release_spin_rate
+  .[-1,]
+  }%>%apply(.,2,function(ta){
+    ta%<>%as.numeric%>%round(digits = 2)
+  })
+
+
+##畫圖 一般的熱力圖
+heatmap(table_1%>%as.matrix(),Colv = NA, Rowv = NA)
+##熱力圖+數字
+install.packages("gplots", dependencies = TRUE)
+library(gplots)
+
+heatmap.2(table_1%>%as.matrix(),
+          cellnote = table_1%>%as.matrix(),
+          notecol="black", 
+          density.info="none",
+          trace="none")
