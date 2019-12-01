@@ -81,4 +81,5 @@ heatmap.2(table_1%>%as.matrix(),
           cellnote = table_1%>%as.matrix(),
           notecol="black", 
           density.info="none",
-          trace="none")
+          trace="none",
+          Colv = NA, Rowv = NA)
