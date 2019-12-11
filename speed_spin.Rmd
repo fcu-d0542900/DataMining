@@ -165,7 +165,7 @@ swinging_strike_Breakingball_mean <- data.frame(swinging_strike_Breakingball_mea
 ```
 
 ### 繪製表格
-快速球
+快速球  
 ```{r}
 table_swinging_Fastball_mean<-lapply(spin,function(r){
   data.frame(
@@ -194,7 +194,7 @@ rownames(table_swinging_Fastball_mean) <- speed
 ```{r, echo=FALSE}
 table_swinging_Fastball_mean
 ```
-變化球
+變化球  
 ```{r}
 table_swinging_Breakingball_mean<-lapply(spin,function(r){
   data.frame(
@@ -226,7 +226,7 @@ table_swinging_Breakingball_mean
 
 
 ### 繪製熱力圖
-快速球
+快速球  
 ```{r, echo=FALSE, warning=FALSE}
 heatmap.2(table_swinging_Fastball_mean%>%as.matrix(),
           cellnote = table_swinging_Fastball_mean%>%as.matrix(),
@@ -237,7 +237,7 @@ heatmap.2(table_swinging_Fastball_mean%>%as.matrix(),
           Colv = NA, Rowv = NA)
 ```
   
-變化球
+變化球  
 ```{r, echo=FALSE, warning=FALSE}
 heatmap.2(table_swinging_Breakingball_mean%>%as.matrix(),
           cellnote = table_swinging_Breakingball_mean%>%as.matrix(),
@@ -247,6 +247,9 @@ heatmap.2(table_swinging_Breakingball_mean%>%as.matrix(),
           col=colorpanel(100,low="white",mid="yellow",high="red"),
           Colv = NA, Rowv = NA)
 ```
+
+由圖可發現，快速球對於揮空率轉速與球速越高，則揮空率也越大。  
+而變化球則是速度越慢，轉速介於1900到2100之間揮空率最高。
 
 
 ## 球速與轉速對於打擊角度之分析
