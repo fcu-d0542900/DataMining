@@ -254,6 +254,7 @@ heatmap.2(table_swinging_Breakingball_mean%>%as.matrix(),
 
 ## 球速與轉速對於打擊角度之分析
 
+### 整理
 ```{r}
 launch_angle <- release_speed_rate[-3]
 launch_angle <- na.omit(launch_angle)
@@ -313,3 +314,110 @@ heatmap.2(table_launch_angle_mean%>%as.matrix(),
 內野高飛 : >50 度
 
 
+
+
+## 加入球種探討
+
+### 快速球 vs 變化球
+```{r}
+launch_angle_Fastball <- filter(launch_angle,pitch_name %in% Fastball)
+launch_angle_Breakingball <- filter(launch_angle,pitch_name %in% Breakingball)
+```
+```{r}
+launch_angle_Fastball_mean <- launch_angle_Fastball %>%
+  group_by(release_speed,release_spin_rate) %>%
+  summarise(count = n(),mean = mean(launch_angle))
+
+launch_angle_Breakingball_mean <- launch_angle_Breakingball %>%
+  group_by(release_speed,release_spin_rate) %>%
+  summarise(count = n(),mean = mean(launch_angle))
+```
+```{r, include=FALSE}
+launch_angle_Fastball_mean <- data.frame(launch_angle_Fastball_mean)
+launch_angle_Breakingball_mean <- data.frame(launch_angle_Breakingball_mean)
+```
+
+
+### 繪製表格
+快速球  
+```{r}
+table_angle_Fastball_mean<-lapply(spin,function(r){
+  data.frame(
+    spin = r,
+    '<70' = get(launch_angle_Fastball_mean,"<70",r),
+    '70-75' = get(launch_angle_Fastball_mean,"70-75",r),
+    '75-80' = get(launch_angle_Fastball_mean,"75-80",r),
+    '80-85' = get(launch_angle_Fastball_mean,"80-85",r),
+    '85-90' = get(launch_angle_Fastball_mean,"85-90",r),
+    '90-95' = get(launch_angle_Fastball_mean,"90-95",r),
+    '95-100' = get(launch_angle_Fastball_mean,"95-100",r),
+    '>100' = get(launch_angle_Fastball_mean,">100",r)
+  )
+})%>%bind_rows()%>%t()%>%{
+  colnames(.) <- spin
+  .[-1,]
+  }%>%apply(.,2,function(ta){
+    ta%>%as.numeric%>%round(digits = 2)
+  })
+```
+```{r, include=FALSE}
+table_angle_Fastball_mean <- data.frame(table_angle_Fastball_mean)
+colnames(table_angle_Fastball_mean) <- spin
+rownames(table_angle_Fastball_mean) <- speed
+```
+```{r, echo=FALSE}
+table_angle_Fastball_mean
+```
+變化球  
+```{r}
+table_angle_Breakingball_mean<-lapply(spin,function(r){
+  data.frame(
+    spin = r,
+    '<70' = get(launch_angle_Breakingball_mean,"<70",r),
+    '70-75' = get(launch_angle_Breakingball_mean,"70-75",r),
+    '75-80' = get(launch_angle_Breakingball_mean,"75-80",r),
+    '80-85' = get(launch_angle_Breakingball_mean,"80-85",r),
+    '85-90' = get(launch_angle_Breakingball_mean,"85-90",r),
+    '90-95' = get(launch_angle_Breakingball_mean,"90-95",r),
+    '95-100' = get(launch_angle_Breakingball_mean,"95-100",r),
+    '>100' = get(launch_angle_Breakingball_mean,">100",r)
+  )
+})%>%bind_rows()%>%t()%>%{
+  colnames(.) <- spin
+  .[-1,]
+  }%>%apply(.,2,function(ta){
+    ta%>%as.numeric%>%round(digits = 2)
+  })
+```
+```{r, include=FALSE}
+table_angle_Breakingball_mean <- data.frame(table_angle_Breakingball_mean)
+colnames(table_angle_Breakingball_mean) <- spin
+rownames(table_angle_Breakingball_mean) <- speed
+```
+```{r, echo=FALSE}
+table_angle_Breakingball_mean
+```
+
+
+### 繪製熱力圖
+快速球  
+```{r, echo=FALSE, warning=FALSE}
+heatmap.2(table_angle_Fastball_mean%>%as.matrix(),
+          cellnote = table_angle_Fastball_mean%>%as.matrix(),
+          notecol="black", 
+          density.info="none",
+          trace="none",
+          col=colorpanel(100,low="white",mid="white",high="steelblue"),
+          Colv = NA, Rowv = NA)
+```
+  
+變化球  
+```{r, echo=FALSE, warning=FALSE}
+heatmap.2(table_angle_Breakingball_mean%>%as.matrix(),
+          cellnote = table_angle_Breakingball_mean%>%as.matrix(),
+          notecol="black", 
+          density.info="none",
+          trace="none",
+          col=colorpanel(100,low="white",mid="steelblue",high="white"),
+          Colv = NA, Rowv = NA)
+```
