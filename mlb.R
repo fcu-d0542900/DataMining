@@ -115,3 +115,14 @@ barplot(pitch$swing%>%as.character()%>%as.numeric(),names.arg=pitch$ZH,
         width = 700,high = 500,
         main = "pitch_name")
 abline(h = c(0.03,0.05,0.08,0.12,0.14),col = "red")
+
+
+##球速+轉速
+a<-dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle from mlb_record")
+a[["release_speed"]] <- ordered(cut(a[[ "release_speed"]], c(0,70,75,80,85,90,95,100,110)),
+                                labels = c("<70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-100", ">100"))
+a%<>%filter(!is.na(release_speed))
+boxplot(formula = release_spin_rate ~ release_speed,
+        data = a,
+        xlab = "release_speed",
+        ylab = "release_spin_rate")
