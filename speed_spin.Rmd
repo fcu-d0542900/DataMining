@@ -36,7 +36,7 @@ dbListTables(db)
 從資料庫中取出球速、轉速及描述資料
 
 ```{r}
-release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle,pitch_name from mlb_record")
+release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle,pitch_name,launch_speed_angle from mlb_record")
 ```
 
 ### 整理
@@ -54,7 +54,7 @@ release_speed_rate[["release_spin_rate"]] <- ordered(cut(release_speed_rate[[ "r
 ```{r}
 #選出有揮擊之動作
 hit <- c("hit_into_play_score","hit_into_play","foul","swinging_strike","swinging_strike_blocked","hit_into_play_no_out","foul_tip")
-swinging_strike <- release_speed_rate[-4]
+swinging_strike <- release_speed_rate[c(-4,-6)]
 swinging_strike$swinging_strike <- FALSE
 
 swinging_strike[swinging_strike$description=='swinging_strike','swinging_strike'] <- TRUE
@@ -421,3 +421,68 @@ heatmap.2(table_angle_Breakingball_mean%>%as.matrix(),
           col=colorpanel(100,low="white",mid="steelblue",high="white"),
           Colv = NA, Rowv = NA)
 ```
+
+
+## 打擊速度+角度
+launch_speed_angle  
+1: Weak  
+2: Topped  
+3: Under  
+4: Flare/Burner  
+5: Solid Contact  
+6: Barrel  
+
+### 整理
+```{r}
+speed_angle <- filter(release_speed_rate,description %in% hit)[c(-3,-4)]
+speed_angle <- na.omit(speed_angle)
+```
+```{r}
+speed_angle_mean <- speed_angle %>%
+  group_by(release_speed,release_spin_rate) %>%
+  summarise(count = n(),mean = mean(launch_speed_angle))
+```
+
+### 繪製表格
+
+```{r}
+table_speed_angle_mean<-lapply(spin,function(r){
+  data.frame(
+    spin = r,
+    '<70' = get(speed_angle_mean,"<70",r),
+    '70-75' = get(speed_angle_mean,"70-75",r),
+    '75-80' = get(speed_angle_mean,"75-80",r),
+    '80-85' = get(speed_angle_mean,"80-85",r),
+    '85-90' = get(speed_angle_mean,"85-90",r),
+    '90-95' = get(speed_angle_mean,"90-95",r),
+    '95-100' = get(speed_angle_mean,"95-100",r),
+    '>100' = get(speed_angle_mean,">100",r)
+  )
+})%>%bind_rows()%>%t()%>%{
+  colnames(.) <- spin
+  .[-1,]
+  }%>%apply(.,2,function(ta){
+    ta%>%as.numeric%>%round(digits = 2)
+  })
+```
+```{r, include=FALSE}
+table_speed_angle_mean <- data.frame(table_speed_angle_mean)
+colnames(table_speed_angle_mean) <- spin
+rownames(table_speed_angle_mean) <- speed
+```
+```{r, echo=FALSE}
+table_speed_angle_mean
+```
+
+### 繪製熱力圖
+
+```{r, warning=FALSE}
+heatmap.2(table_speed_angle_mean%>%as.matrix(),
+          cellnote = table_speed_angle_mean%>%as.matrix(),
+          notecol="black", 
+          density.info="none",
+          trace="none",
+          col=colorpanel(24,low="white" ,high="steelblue"),
+          Colv = NA, Rowv = NA)
+```
+
