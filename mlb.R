@@ -96,3 +96,22 @@ heatmap.2(table_swinging_strike_mean%>%as.matrix(),
           trace="none",
           col=colorpanel(100,low="white",mid="yellow",high="red"),
           Colv = NA, Rowv = NA)
+
+##球路 揮空率
+pitch_type_DOC<-read.csv(file="pitch_type_DOC.csv", header=TRUE, sep=",",stringsAsFactors = F,fileEncoding = "utf-8")
+all_pitch<-mlb_record%>%filter(pitch_type!="")%>%data.table()%>%split(by = "pitch_type")
+pitch<-lapply(names(all_pitch), function(pitch){
+  sw<-mlb_record%>%filter(description == "swinging_strike" & pitch_type == pitch)%>%nrow
+  all<-all_pitch[[pitch]]$strikes%>%sum
+  pro<-sw/all
+  rbind(pro%>%round(digits = 3),pitch_type = pitch)
+})%>%bind_cols()%>%t()%>%{
+  colnames(.)<-c("swing","pitch_type")
+  .
+  }%>%as.data.frame()%>%left_join(pitch_type_DOC)
+
+
+barplot(pitch$swing%>%as.character()%>%as.numeric(),names.arg=pitch$ZH,
+        width = 1200,high = 900,
+        main = "pitch_name")
+abline(h = c(0.03,0.05,0.08,0.12,0.14),col = "red")
