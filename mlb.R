@@ -112,6 +112,6 @@ pitch<-lapply(names(all_pitch), function(pitch){
 
 
 barplot(pitch$swing%>%as.character()%>%as.numeric(),names.arg=pitch$ZH,
-        width = 1200,high = 900,
+        width = 700,high = 500,
         main = "pitch_name")
 abline(h = c(0.03,0.05,0.08,0.12,0.14),col = "red")
