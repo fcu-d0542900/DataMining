@@ -1,7 +1,6 @@
 ---
-title: "MLB"
-author: "YURU"
-date: "2019/12/11"
+title: "球速與轉速對於打者打擊之影響"
+author: "董育汝、陳鈴雅、林思言"
 output: html_document
 ---
 
@@ -33,7 +32,7 @@ dbListTables(db)
 ## 球速與轉速對於揮空率之分析
 
 ### 讀取資料庫內容
-從資料庫中取出球速、轉速及描述資料
+從資料庫中取出所需資料
 
 ```{r}
 release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle,pitch_name,launch_speed_angle from mlb_record")
@@ -54,12 +53,13 @@ release_speed_rate[["release_spin_rate"]] <- ordered(cut(release_speed_rate[[ "r
 ```{r}
 #選出有揮擊之動作
 hit <- c("hit_into_play_score","hit_into_play","foul","swinging_strike","swinging_strike_blocked","hit_into_play_no_out","foul_tip")
+out <- c('swinging_strike','swinging_strike_blocked')
 swinging_strike <- release_speed_rate[c(-4,-6)]
 swinging_strike$swinging_strike <- FALSE
-
+#判斷是否揮空
 swinging_strike[swinging_strike$description=='swinging_strike','swinging_strike'] <- TRUE
 swinging_strike[swinging_strike$description=='swinging_strike_blocked','swinging_strike'] <- TRUE
-
+#刪除空值
 swinging_strike <- na.omit(swinging_strike)
 swinging_strike <- filter(swinging_strike,description %in% hit)
 swinging_strike <- swinging_strike[-3]
@@ -80,6 +80,7 @@ swinging_strike_mean
 spin <- swinging_strike_mean$release_spin_rate%>%unique()
 speed <- swinging_strike_mean$release_speed%>%unique()
 ```
+將總數<3次者視為無資料。
 ```{r}
 get <- function(data,speed,spin){
   d <- data%>%filter(release_speed == speed,release_spin_rate == spin)
@@ -90,6 +91,7 @@ get <- function(data,speed,spin){
   return(d$mean)
 }
 ```
+繪製表格
 ```{r}
 table_swinging_strike_mean<-lapply(spin,function(r){
   data.frame(
@@ -313,8 +315,58 @@ heatmap.2(table_launch_angle_mean%>%as.matrix(),
 高飛球 : 25-50 度  
 內野高飛 : >50 度
 
+### 分級距
 
+```{r}
+launch_angle[["launch_angle_cut"]] <- ordered(cut(launch_angle[[ "launch_angle"]], c(-90,10,25,50,90)),labels = c("<10", "10-25", "25-50", ">50"))
+```
 
+```{r, message=FALSE}
+launch_angle_count <- launch_angle %>%
+  group_by(release_speed,release_spin_rate,launch_angle_cut) %>%
+  summarise(count = n())
+
+launch_angle_max <- launch_angle_count %>%
+  group_by(release_speed,release_spin_rate) %>%
+  summarise(count = max(count))
+
+launch_angle_max <- left_join(launch_angle_max,launch_angle_count)
+```
+```{r, echo=FALSE}
+#data.frame(launch_angle_max)[-5]
+launch_angle_max
+```
+
+### 繪製表格
+```{r, include=FALSE}
+launch_angle_max['mean'] <- launch_angle_max$launch_angle_cut
+```
+```{r}
+table_launch_angle_max<-lapply(spin,function(r){
+  data.frame(
+    spin = r,
+    '<70' = get(launch_angle_max,"<70",r),
+    '70-75' = get(launch_angle_max,"70-75",r),
+    '75-80' = get(launch_angle_max,"75-80",r),
+    '80-85' = get(launch_angle_max,"80-85",r),
+    '85-90' = get(launch_angle_max,"85-90",r),
+    '90-95' = get(launch_angle_max,"90-95",r),
+    '95-100' = get(launch_angle_max,"95-100",r),
+    '>100' = get(launch_angle_max,">100",r)
+  )
+})%>%bind_rows()%>%t()%>%{
+  colnames(.) <- spin
+  .[-1,]
+  }
+```
+```{r, include=FALSE}
+table_launch_angle_max <- data.frame(table_launch_angle_max)
+colnames(table_launch_angle_max) <- spin
+rownames(table_launch_angle_max) <- speed
+```
+```{r, echo=FALSE}
+table_launch_angle_max
+```
 
 ## 加入球種探討
 
@@ -423,66 +475,27 @@ heatmap.2(table_angle_Breakingball_mean%>%as.matrix(),
 ```
 
 
-## 打擊速度+角度
-launch_speed_angle  
-1: Weak  
-2: Topped  
-3: Under  
-4: Flare/Burner  
-5: Solid Contact  
-6: Barrel  
-
-### 整理
+## 各種球路之揮空率
 ```{r}
-speed_angle <- filter(release_speed_rate,description %in% hit)[c(-3,-4)]
-speed_angle <- na.omit(speed_angle)
-```
-```{r}
-speed_angle_mean <- speed_angle %>%
-  group_by(release_speed,release_spin_rate) %>%
-  summarise(count = n(),mean = mean(launch_speed_angle))
-```
-
-### 繪製表格
-
-```{r}
-table_speed_angle_mean<-lapply(spin,function(r){
-  data.frame(
-    spin = r,
-    '<70' = get(speed_angle_mean,"<70",r),
-    '70-75' = get(speed_angle_mean,"70-75",r),
-    '75-80' = get(speed_angle_mean,"75-80",r),
-    '80-85' = get(speed_angle_mean,"80-85",r),
-    '85-90' = get(speed_angle_mean,"85-90",r),
-    '90-95' = get(speed_angle_mean,"90-95",r),
-    '95-100' = get(speed_angle_mean,"95-100",r),
-    '>100' = get(speed_angle_mean,">100",r)
-  )
-})%>%bind_rows()%>%t()%>%{
-  colnames(.) <- spin
-  .[-1,]
-  }%>%apply(.,2,function(ta){
-    ta%>%as.numeric%>%round(digits = 2)
-  })
-```
-```{r, include=FALSE}
-table_speed_angle_mean <- data.frame(table_speed_angle_mean)
-colnames(table_speed_angle_mean) <- spin
-rownames(table_speed_angle_mean) <- speed
+pitch_name <- filter(release_speed_rate, pitch_name!="")$pitch_name %>% unique()
+pitch<-lapply(pitch_name, function(pitch){
+  sw<-release_speed_rate%>%filter(description %in% out & pitch_name == pitch)%>%nrow
+  all<-release_speed_rate%>%filter(description %in% hit & pitch_name == pitch)%>%nrow
+  pro<-sw/all
+  rbind(pro%>%round(digits = 3),pitch_type = pitch)
+})%>%bind_cols()%>%t()%>%{
+  colnames(.)<-c("swing","pitch_name")
+  .
+  }%>%as.data.frame()
 ```
 ```{r, echo=FALSE}
-table_speed_angle_mean
+row.names(pitch) <- pitch$pitch_name
+pitch$swing <- pitch$swing%>%as.character()%>%as.numeric()
+pitch <- pitch[order(-pitch$swing),]
 ```
-
-### 繪製熱力圖
-
-```{r, warning=FALSE}
-heatmap.2(table_speed_angle_mean%>%as.matrix(),
-          cellnote = table_speed_angle_mean%>%as.matrix(),
-          notecol="black", 
-          density.info="none",
-          trace="none",
-          col=colorpanel(24,low="white" ,high="steelblue"),
-          Colv = NA, Rowv = NA)
+畫出長條圖
+```{r}
+barplot(pitch$swing,names.arg=pitch$pitch_name, horiz=TRUE,las=1,cex.names=0.53,
+        col=rainbow(12),#legend.text = pitch$pitch_name,
+        main = "球種對於揮空率")
 ```
-
