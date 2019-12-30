@@ -40,7 +40,10 @@ release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,des
 
 ### 整理
 將球速、轉速分為各項級距
-
+```{r}
+my.name <- readline(prompt="Enter name: ")
+my.name
+```
 ```{r}
 release_speed_rate[["release_speed"]] <- ordered(cut(release_speed_rate[[ "release_speed"]], c(0,70,75,80,85,90,95,100,110)),labels = c("<70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-100", ">100"))
 
@@ -141,6 +144,34 @@ heatmap.2(table_swinging_strike_mean%>%as.matrix(),
 大部分轉速越高揮空率越高，但球速不一定越高，這可能與球種有關，若為變化球球速會較直球慢但揮空率較高。
 
 ## 加入球種探討
+
+### 各種球路之揮空率
+```{r}
+pitch_name <- filter(release_speed_rate, pitch_name!="")$pitch_name %>% unique()
+pitch<-lapply(pitch_name, function(pitch){
+  sw<-release_speed_rate%>%filter(description %in% out & pitch_name == pitch)%>%nrow
+  all<-release_speed_rate%>%filter(description %in% hit & pitch_name == pitch)%>%nrow
+  pro<-sw/all
+  rbind(pro%>%round(digits = 3),pitch_type = pitch)
+})%>%bind_cols()%>%t()%>%{
+  colnames(.)<-c("swing","pitch_name")
+  .
+  }%>%as.data.frame()
+```
+```{r, echo=FALSE}
+pitch
+```
+```{r, echo=FALSE}
+row.names(pitch) <- pitch$pitch_name
+pitch$swing <- pitch$swing%>%as.character()%>%as.numeric()
+pitch <- pitch[order(-pitch$swing),]
+```
+畫出長條圖
+```{r}
+barplot(pitch$swing,names.arg=pitch$pitch_name, horiz=TRUE,las=1,cex.names=0.53,
+        col=rainbow(12),#legend.text = pitch$pitch_name,
+        main = "球種對於揮空率")
+```
 
 ### 快速球 vs 變化球
 
@@ -475,27 +506,3 @@ heatmap.2(table_angle_Breakingball_mean%>%as.matrix(),
 ```
 
 
-## 各種球路之揮空率
-```{r}
-pitch_name <- filter(release_speed_rate, pitch_name!="")$pitch_name %>% unique()
-pitch<-lapply(pitch_name, function(pitch){
-  sw<-release_speed_rate%>%filter(description %in% out & pitch_name == pitch)%>%nrow
-  all<-release_speed_rate%>%filter(description %in% hit & pitch_name == pitch)%>%nrow
-  pro<-sw/all
-  rbind(pro%>%round(digits = 3),pitch_type = pitch)
-})%>%bind_cols()%>%t()%>%{
-  colnames(.)<-c("swing","pitch_name")
-  .
-  }%>%as.data.frame()
-```
-```{r, echo=FALSE}
-row.names(pitch) <- pitch$pitch_name
-pitch$swing <- pitch$swing%>%as.character()%>%as.numeric()
-pitch <- pitch[order(-pitch$swing),]
-```
-畫出長條圖
-```{r}
-barplot(pitch$swing,names.arg=pitch$pitch_name, horiz=TRUE,las=1,cex.names=0.53,
-        col=rainbow(12),#legend.text = pitch$pitch_name,
-        main = "球種對於揮空率")
-```
