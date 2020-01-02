@@ -13,6 +13,7 @@ dbListTables(db)
 
 swinging_strike <- dbGetQuery(db, "SELECT * from swinging_strike")
 
+pitch_name <- unique(filter(swinging_strike,pitch_name!="")$pitch_name)
 pitch_type <- unique(filter(swinging_strike,pitch_type!="")$pitch_type)
 spin <- levels(swinging_strike$release_spin_rate)<- c("<1700","1700-1900", "1900-2100", "2100-2300", "2300-2500", ">2500")
 speed <- levels(swinging_strike$release_speed)<- c("<70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-100", ">100")
@@ -31,10 +32,12 @@ get <- function(data,speed,spin,ch=0){
   return(d$mean)
 }
 
-get_swinging_strike <- function(balltype="",ch=0) {
+get_swinging_strike <- function(balltype="",ch=0,check=0) {
   swinging_strike_ball <- swinging_strike
-  if(balltype!="" & balltype!="All") {
-    swinging_strike_ball <- filter(swinging_strike,pitch_type == balltype)
+  if(check==1)
+    swinging_strike_ball <- filter(swinging_strike,pitch_name%in%balltype)
+  else if(balltype!="All") {
+    swinging_strike_ball <- filter(swinging_strike,pitch_type%in%balltype)
   }
   
   swinging_strike_mean <- swinging_strike_ball %>%
@@ -101,13 +104,21 @@ ui<-fluidPage(
   selectInput(inputId = "select_ball_type",
               label = "選擇球種",
               choices = c("All",pitch_type)),
-  plotOutput("heatmap"),
-  h3("球速、轉速之總球數"),
-  tableOutput("table")
+  checkboxGroupInput(inputId = "check_ball_type",
+                     label = NULL,
+                     choices = pitch_name,
+                     inline = TRUE),
+  plotOutput("heatmap_mean"),
+  #h3("球速、轉速之總球數"),
+  plotOutput("heatmap_sum"),
+  #tableOutput("table")
 )
 server<-function(input,output){
-  output$heatmap <- renderPlot({
-    table <- get_swinging_strike(input$select_ball_type)
+  output$heatmap_mean <- renderPlot({
+    if(input$select_ball_type == "All" & !is.null(input$check_ball_type))
+      table <- get_swinging_strike(input$check_ball_type,check=1)
+    else
+      table <- get_swinging_strike(input$select_ball_type)
     if(na.omit(table) %>% nrow() != 0) {
       heatmap.2(table%>%as.matrix(),
                 main = "球速、轉速對於揮空率",
@@ -119,8 +130,27 @@ server<-function(input,output){
                 Colv = NA, Rowv = NA)
     }
   })
+  output$heatmap_sum <- renderPlot({
+    if(input$select_ball_type == "All" & !is.null(input$check_ball_type))
+      table <- get_swinging_strike(input$check_ball_type,check=1,ch=1)
+    else
+      table <- get_swinging_strike(input$select_ball_type,ch=1)
+    if(na.omit(table) %>% nrow() != 0) {
+      heatmap.2(table%>%as.matrix(),
+                main = "球速、轉速之總球數",
+                cellnote = table%>%as.matrix(),
+                notecol="black", 
+                density.info="none",
+                trace="none",
+                col=colorpanel(100,low="white",high="steelblue"),
+                Colv = NA, Rowv = NA)
+    }
+  })
   output$table <- renderTable({
-    table <- get_swinging_strike(input$select_ball_type,ch=1)
+    if(input$select_ball_type == "All" & !is.null(input$check_ball_type))
+      table <- get_swinging_strike(input$check_ball_type,check=1,ch=1)
+    else
+      table <- get_swinging_strike(input$select_ball_type,ch=1)
   },
   rownames=TRUE,digits=0)
 }
