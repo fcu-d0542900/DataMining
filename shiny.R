@@ -11,6 +11,7 @@ drv <- dbDriver("SQLite")
 db <- dbConnect(drv, "data.db")
 dbListTables(db)
 
+speed_spin <- dbGetQuery(db, "SELECT * from speed_spin")
 swinging_strike <- dbGetQuery(db, "SELECT * from swinging_strike")
 
 pitch_name <- unique(filter(swinging_strike,pitch_name!="")$pitch_name)
@@ -98,9 +99,42 @@ get_swinging_strike <- function(balltype="",ch=0,check=0) {
   
 }
 
+get_speed_spin <- function(speed,spin) {
+  table <- filter(speed_spin,
+         findInterval(release_speed, speed)==1L,
+         findInterval(release_spin_rate,spin)==1L)
+  pitch <- lapply(pitch_name, function(pitch){
+    hit <- filter(table,pitch_name == pitch) %>% nrow
+    out <- filter(table,pitch_name == pitch)$swinging_strike %>% sum()
+    pro <- out/hit
+    rbind(pro%>%round(digits = 3),pitch_type = pitch)
+  })%>%bind_cols()%>%t()%>%{
+    colnames(.)<-c("swing","pitch_name")
+    .
+  }%>%as.data.frame()
+  row.names(pitch) <- pitch$pitch_name
+  pitch$swing <- pitch$swing%>%as.character()%>%as.numeric()
+  pitch <- pitch[order(-pitch$swing),]
+  
+  return(pitch)
+}
 
 ui<-fluidPage(
-  titlePanel("球速、轉速對於揮空率"),
+  titlePanel("球種、球速、轉速對於揮空率"),
+  sliderInput(inputId = "speed",
+              label = "球速範圍:",
+              min = min(speed_spin$release_speed) %>% floor(),
+              max = max(speed_spin$release_speed) %>% ceiling(),
+              step = 1,
+              value = c(80, 90)),
+  sliderInput(inputId = "spin",
+              label = "轉速範圍:",
+              min = (min(speed_spin$release_spin_rate)-50) %>% round(digits=-2),
+              max = (max(speed_spin$release_spin_rate)+50) %>% round(digits=-2),
+              step = 100,
+              value = c(1900, 2100)),
+  plotOutput("hist"),
+  #titlePanel("球速、轉速對於揮空率"),
   selectInput(inputId = "select_ball_type",
               label = "選擇球種",
               choices = c("All",pitch_type)),
@@ -114,6 +148,13 @@ ui<-fluidPage(
   #tableOutput("table")
 )
 server<-function(input,output){
+  output$hist <- renderPlot({
+    table <- get_speed_spin(input$speed,input$spin)
+    bp <- barplot(table$swing,legend.text = table$pitch_name,
+            col=rainbow(12),# horiz=TRUE,cex.names=0.53,names.arg=table$pitch_name,las=1,
+            main = "球種對於揮空率")
+    text(bp,abs(table$swing-0.01),labels=round(table$swing,digits=2))
+  })
   output$heatmap_mean <- renderPlot({
     if(input$select_ball_type == "All" & !is.null(input$check_ball_type))
       table <- get_swinging_strike(input$check_ball_type,check=1)
