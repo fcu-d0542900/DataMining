@@ -32,7 +32,8 @@ get <- function(data,speed,spin,ch=0){
 }
 
 get_swinging_strike <- function(balltype="",ch=0) {
-  if(balltype!="") {
+  swinging_strike_ball <- swinging_strike
+  if(balltype!="" & balltype!="All") {
     swinging_strike_ball <- filter(swinging_strike,pitch_type == balltype)
   }
   
@@ -99,7 +100,7 @@ ui<-fluidPage(
   titlePanel("球速、轉速對於揮空率"),
   selectInput(inputId = "select_ball_type",
               label = "選擇球種",
-              choices = pitch_type),
+              choices = c("All",pitch_type)),
   plotOutput("heatmap"),
   h3("球速、轉速之總球數"),
   tableOutput("table")
