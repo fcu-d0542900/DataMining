@@ -107,13 +107,14 @@ get_speed_spin <- function(speed,spin) {
     hit <- filter(table,pitch_name == pitch) %>% nrow
     out <- filter(table,pitch_name == pitch)$swinging_strike %>% sum()
     pro <- out/hit
-    rbind(pro%>%round(digits = 3),pitch_type = pitch)
+    rbind(pro%>%round(digits = 3),pitch_type = pitch,hit=hit)
   })%>%bind_cols()%>%t()%>%{
-    colnames(.)<-c("swing","pitch_name")
+    colnames(.)<-c("swing","pitch_name","hit")
     .
   }%>%as.data.frame()
   row.names(pitch) <- pitch$pitch_name
   pitch$swing <- pitch$swing%>%as.character()%>%as.numeric()
+  pitch$hit <- pitch$hit%>%as.character()%>%as.numeric()
   pitch <- pitch[order(-pitch$swing),]
   
   return(pitch)
@@ -150,10 +151,17 @@ ui<-fluidPage(
 server<-function(input,output){
   output$hist <- renderPlot({
     table <- get_speed_spin(input$speed,input$spin)
-    bp <- barplot(table$swing,legend.text = table$pitch_name,
-            col=rainbow(12),# horiz=TRUE,cex.names=0.53,names.arg=table$pitch_name,las=1,
+    bp <- barplot(table$hit,yaxt="n",ylim=c(0,max(table$hit)),
+            col="gray",border=NA,
             main = "球種對於揮空率")
-    text(bp,abs(table$swing-0.01),labels=round(table$swing,digits=2))
+    text(bp,max(table$hit)*0.98,labels=table$hit,col="black")
+    axis(side=4)
+    par(new=T)
+    bp <- barplot(table$swing,ylim=c(0,max(table$swing+0.2,na.rm=TRUE)),names.arg=table$pitch_name,
+                  col=rainbow(12,alpha=0.3),border=NA,las=2,# horiz=TRUE,legend.text = table$pitch_name,cex.names=0.53,las=1,
+                  main = "球種對於揮空率")
+    text(bp,abs(table$swing+0.02),labels=round(table$swing,digits=2),col="blue")
+    
   })
   output$heatmap_mean <- renderPlot({
     if(input$select_ball_type == "All" & !is.null(input$check_ball_type))
