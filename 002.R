@@ -1,3 +1,14 @@
+mlb_record <- dbGetQuery(db, "SELECT * from mlb_record")
+release_speed_rate <- dbGetQuery(db, "SELECT release_speed,release_spin_rate,description,launch_angle from mlb_record")
+unique(release_speed_rate$description)
+
+release_speed_rate[["release_speed"]] <- ordered(cut(release_speed_rate[[ "release_speed"]], c(0,70,75,80,85,90,95,100,110)),
+                                                 labels = c("<70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-1300", ">100"))
+
+release_speed_rate[["release_spin_rate"]] <- ordered(cut(release_speed_rate[[ "release_spin_rate"]], c(0,1700,1900,2100,2300,2500,4000)),
+                                                     labels = c("<1700", "1700-1900", "1900-2100", "2100-2300", "2300-2500", ">2500"))
+
+
 release_speed_rate%<>%filter(launch_angle!="NA")
 sapply_des<-function(speed,spin,description){
   sapply(description, function(d) {
@@ -41,9 +52,9 @@ get_mean_angle<-function(description){
 
 
 ui1 <- fluidPage(
-  titlePanel("²y³t¡BÂà³t - description-angle"),
+  titlePanel("çƒé€Ÿã€è½‰é€Ÿ - description-angle"),
   selectInput(inputId = "description",
-              label = "¿ï¾Ü´y­z",
+              label = "é¸æ“‡æè¿°",
               choices = description),
   tableOutput("table")
 )
